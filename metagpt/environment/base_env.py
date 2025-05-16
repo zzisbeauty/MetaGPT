@@ -161,10 +161,12 @@ class Environment(ExtEnv):
         for _ in range(k):
             futures = []
             for role in self.roles.values():
+                # 只要 role.run() 是一个 async def 函数，并在里面做了 真实异步行为（比如 await LLM、网络 I/O、延迟等待）
+                # 那么下方的 await asyncio.gather(*futures) 就是一个标准的异步调度
                 future = role.run()
                 futures.append(future)
 
-            await asyncio.gather(*futures)
+            await asyncio.gather(*futures) # 让两位辩手的辩论过程并发执行；等待所有协程执行完成，才进入下一轮，相当于：“所有角色同时发言完，再进入下一轮”
             logger.debug(f"is idle: {self.is_idle}")
 
     def get_roles(self) -> dict[str, "Role"]:

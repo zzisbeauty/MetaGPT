@@ -531,6 +531,11 @@ class Role(SerializationMixin, ContextMixin, BaseModel):
     @role_raise_decorator
     async def run(self, with_message=None) -> Message | None:
         """Observe, and think and act based on the results of the observation"""
+        """
+        异步行为分析，哪些地方时挂起，交出GPU，让事件管理器调度其他任务：
+        1. await self._observe()
+        2. await self.react()
+        """
         if with_message:
             msg = None
             if isinstance(with_message, str):
@@ -539,14 +544,15 @@ class Role(SerializationMixin, ContextMixin, BaseModel):
                 msg = with_message
             elif isinstance(with_message, list):
                 msg = Message(content="\n".join(with_message))
-            if not msg.cause_by:
+            if not msg.cause_by: 
                 msg.cause_by = UserRequirement
             self.put_message(msg)
-        if not await self._observe():
+        if not await self._observe(): # 这表示“观察世界、等待新消息”的动作是异步的。如果 _observe() 会等待消息队列、时间、输入，那这个 await 就可能挂起，释放 control 回到事件循环。
             # If there is no new information, suspend and wait
             logger.debug(f"{self._setting}: no news. waiting.")
             return
 
+        # 如果 react() 是一个耗时任务，例如 GPT API、网络请求、异步执行链，它会被 await 掉，真正并发执行。
         rsp = await self.react()
 
         # Reset the next action to be taken.

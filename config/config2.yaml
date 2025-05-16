@@ -5,4 +5,5 @@ llm:
   model: "qwen3:4b"  # or gpt-3.5-turbo-1106 / gpt-4-1106-preview
   # base_url: "http://host.docker.internal:11434/api"  # or forward url / other llm url
   # base_url: "http://172.17.92.214:11434/api"  # or forward url / other llm url
-  # api_key: "YOUR_API_KEY"
+  base_url: "http://10.30.30.97:11434/api"  # or forward url / other llm url
+  api_key: "hanwei local ollama"
